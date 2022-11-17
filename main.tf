@@ -16,5 +16,6 @@ module "vpc" {
   tags = {
     DeployedBy = "Terraform"
     Author     = "asterna"
+    Date       = "17/11/22"
   }
 }

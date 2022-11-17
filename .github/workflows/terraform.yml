@@ -13,23 +13,22 @@ jobs:
   terraform-lint:
     name: "Terraform lint & check"
     runs-on: ubuntu-latest
+    outputs:
+      output-validate: ${{ steps.validate.outputs.outcome }}
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+        run: terraform init
 
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check
 
-      - name: Terraform Init
-        id: Init
-        run: terraform init
-
       - name: Terraform Validate
         id: validate
-        run: terraform validate
+        run: terraform validate >> $GITHUB_OUTPUT
 
   terraform-plan:
     name: "Plan terraform + update PR"
@@ -40,12 +39,15 @@ jobs:
       - uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: |
-          terraform init
-          terraform plan -input=false
+        run: terraform plan -input=false
         continue-on-error: true
 
       - name: Update Pull Request
@@ -59,7 +61,7 @@ jobs:
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Validation 🤖\`${{ needs.terraform-lint.outputs.output-validate }}\`
 
             <details><summary>Show Plan</summary>
 
@@ -113,6 +115,7 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Destroy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           terraform init
           terraform destroy -auto-approve
