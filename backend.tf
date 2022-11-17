@@ -6,6 +6,5 @@ terraform {
     workspaces {
       name = "test-api-driven-workflow"
     }
-
   }
 }
