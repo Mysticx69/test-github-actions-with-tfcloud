@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  terraform-lint:
-    name: "Terraform lint & check"
+  terraform-lint-and-plan:
+    name: "Terraform Lint + Plan + Update PullRequest"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,28 +24,17 @@ jobs:
         run: terraform fmt -check
 
       - name: Terraform Init
-        id: Init
+        id: init
         run: terraform init
 
       - name: Terraform Validate
         id: validate
         run: terraform validate
 
-  terraform-plan:
-    name: "Plan terraform + update PR"
-    needs: [terraform-lint]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: |
-          terraform init
-          terraform plan -input=false
+        run: terraform plan -no-color -input=false
         continue-on-error: true
 
       - name: Update Pull Request
@@ -57,9 +46,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
@@ -84,8 +73,9 @@ jobs:
 
   terraform-apply:
     name: "Apply terraform on approval"
-    needs: [terraform-plan]
+    needs: [terraform-lint-and-plan]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-apply
     steps:
@@ -95,15 +85,16 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          terraform init
+          terraform init --upgrade
           terraform apply -auto-approve -input=false
+        continue-on-error: true
 
   terraform-destroy:
     name: "Destroy terraform on approval"
     needs: [terraform-apply]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-destroy
     steps:
