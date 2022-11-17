@@ -10,7 +10,7 @@ jobs:
     name: "Terraform: Apply in production"
     runs-on: ubuntu-latest
     environment:
-      name: tf-apply
+      name: production
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
