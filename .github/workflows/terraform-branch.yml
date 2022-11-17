@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - "main"
-  pull_request:
-    branches:
-      - "main"
-  workflow_dispatch:
 
 jobs:
   terraform-lint-and-plan:
@@ -70,40 +66,3 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
-  terraform-apply:
-    name: "Apply terraform on approval"
-    needs: [terraform-lint-and-plan]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: tf-apply
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Apply
-        run: |
-          terraform init --upgrade
-          terraform apply -auto-approve -input=false
-        continue-on-error: true
-
-  terraform-destroy:
-    name: "Destroy terraform on approval"
-    needs: [terraform-apply]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: tf-destroy
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Destroy
-        run: |
-          terraform init
-          terraform destroy -auto-approve
