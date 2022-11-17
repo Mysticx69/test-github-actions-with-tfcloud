@@ -8,9 +8,7 @@ on:
 jobs:
   terraform-apply:
     name: "Apply terraform on approval"
-    needs: [terraform-lint-and-plan]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-apply
     steps:
@@ -28,7 +26,6 @@ jobs:
     name: "Destroy terraform on approval"
     needs: [terraform-apply]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-destroy
     steps:
