@@ -1,10 +1,10 @@
 terraform {
-  backend "remote" {
-
-    organization = "mysticx"
+  cloud {
 
     workspaces {
       name = "test-api-driven-workflow"
     }
+
+    organization = "mysticx"
   }
 }
