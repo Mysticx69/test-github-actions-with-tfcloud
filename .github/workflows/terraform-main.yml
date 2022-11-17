@@ -7,7 +7,7 @@ on:
 
 jobs:
   terraform-apply:
-    name: "Apply terraform on approval"
+    name: "Terraform: Apply in production"
     runs-on: ubuntu-latest
     environment:
       name: tf-apply
@@ -21,20 +21,3 @@ jobs:
         run: |
           terraform init --upgrade
           terraform apply -auto-approve -input=false
-
-  terraform-destroy:
-    name: "Destroy terraform on approval"
-    needs: [terraform-apply]
-    runs-on: ubuntu-latest
-    environment:
-      name: tf-destroy
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Destroy
-        run: |
-          terraform init
-          terraform destroy -auto-approve
