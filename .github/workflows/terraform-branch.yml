@@ -5,7 +5,7 @@ on:
 
 jobs:
   terraform-lint-and-plan:
-    name: "Terraform Lint + Plan + Update PullRequest"
+    name: "Terraform: Lint+Plan & Update PR"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
