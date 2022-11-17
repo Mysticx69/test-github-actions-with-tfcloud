@@ -11,7 +11,7 @@ on:
 
 jobs:
   terraform-lint-and-plan:
-    name: "Terraform Lint + Terraform Plan + Update PullRequest"
+    name: "Terraform Lint + Plan + Update PullRequest"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -34,7 +34,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -input=false
+        run: terraform plan -no-color -input=false
         continue-on-error: true
 
       - name: Update Pull Request
@@ -75,6 +75,7 @@ jobs:
     name: "Apply terraform on approval"
     needs: [terraform-lint-and-plan]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-apply
     steps:
@@ -84,15 +85,16 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          terraform init
+          terraform init --upgrade
           terraform apply -auto-approve -input=false
+        continue-on-error: true
 
   terraform-destroy:
     name: "Destroy terraform on approval"
     needs: [terraform-apply]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: tf-destroy
     steps:
