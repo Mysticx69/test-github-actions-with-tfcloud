@@ -3,6 +3,10 @@ name: "Terraform PR"
 on:
   pull_request:
 
+defaults:
+  run:
+    working-directory: tf-code
+
 jobs:
   terraform-lint-and-plan:
     name: "Terraform: Lint+Plan & Update PR"
