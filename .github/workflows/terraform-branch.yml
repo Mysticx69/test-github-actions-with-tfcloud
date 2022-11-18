@@ -5,7 +5,7 @@ on:
 
 defaults:
   run:
-    working-directory: tf-code
+    working-directory: ./
 
 jobs:
   terraform-lint-and-plan:
